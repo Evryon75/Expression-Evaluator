@@ -14,8 +14,7 @@ func main() {
 	var input_raw string
 	fmt.Scan(&input_raw)
 	input_raw = EOF + input_raw
-	evaluated := eval(lex(input_raw))
-	pretty_print.Println(evaluated)
+	pretty_print.Println(eval(lex(input_raw)))
 }
 
 func lex(input string) *Node {
@@ -27,7 +26,7 @@ func lex(input string) *Node {
 			Right: lex(input[:index]),
 		}
 	} else {
-		return &Node{}
+		return &Node{Value: strconv.FormatFloat(float64(eval_md(input)), 'f', -1, 64)}
 	}
 }
 
@@ -40,8 +39,8 @@ func find_operator(input string) (operator string, index int) {
 	return "No plus or minus operators found", -1
 }
 
-func eval(tree *Node) float32 {
-	var result float32 = 0
+func eval(tree *Node) float64 {
+	var result float64 = 0
 	switch tree.Value {
 	case "+":
 		if tree.Right.Value == EOF {
@@ -55,31 +54,32 @@ func eval(tree *Node) float32 {
 		} else {
 			result = eval(tree.Right) - eval(tree.Left)
 		}
-	case EOF:
 	default:
-		input_clean := []float32{}
-		input_split := strings.Split(tree.Value, "*")
-		for _, piece_m := range input_split {
-			first := false
-			for _, piece_d := range strings.Split(piece_m, "/") {
-				if !first {
-					temp, _ := strconv.Atoi(piece_d)
-					input_clean = append(input_clean, float32(temp))
-					first = true
-				} else {
-					temp, _ := strconv.Atoi(piece_d)
-					input_clean = append(input_clean, 1/float32(temp))
-				}
+		result = eval_md(strings.Replace(tree.Left.Value, EOF, "", 1))
+	}
+	return result
+}
+func eval_md(input string) float64 {
+	input_clean := []float64{}
+	input_split := strings.Split(input, "*")
+	for _, piece_m := range input_split {
+		first := false
+		for _, piece_d := range strings.Split(piece_m, "/") {
+			if !first {
+				temp, _ := strconv.Atoi(piece_d)
+				input_clean = append(input_clean, float64(temp))
+				first = true
+			} else {
+				temp, _ := strconv.Atoi(piece_d)
+				input_clean = append(input_clean, 1/float64(temp))
 			}
 		}
-		var multiplicand float32 = 1.0
-		for _, multiplicator := range input_clean {
-			multiplicand *= multiplicator
-		}
-		result = multiplicand
 	}
-
-	return result
+	var multiplicand float64 = 1.0
+	for _, multiplicator := range input_clean {
+		multiplicand *= multiplicator
+	}
+	return multiplicand
 }
 
 type Node struct {
