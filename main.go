@@ -57,31 +57,29 @@ func eval(tree *Node) float32 {
 		}
 	case EOF:
 	default:
-		result = eval_md(tree.Value)
-	}
-	return result
-}
-func eval_md(input string) float32 {
-	input_clean := []float32{}
-	input_split := strings.Split(input, "*")
-	for _, piece_m := range input_split {
-		first := false
-		for _, piece_d := range strings.Split(piece_m, "/") {
-			if !first {
-				temp, _ := strconv.Atoi(piece_d)
-				input_clean = append(input_clean, float32(temp))
-				first = true
-			} else {
-				temp, _ := strconv.Atoi(piece_d)
-				input_clean = append(input_clean, 1/float32(temp))
+		input_clean := []float32{}
+		input_split := strings.Split(tree.Value, "*")
+		for _, piece_m := range input_split {
+			first := false
+			for _, piece_d := range strings.Split(piece_m, "/") {
+				if !first {
+					temp, _ := strconv.Atoi(piece_d)
+					input_clean = append(input_clean, float32(temp))
+					first = true
+				} else {
+					temp, _ := strconv.Atoi(piece_d)
+					input_clean = append(input_clean, 1/float32(temp))
+				}
 			}
 		}
+		var multiplicand float32 = 1.0
+		for _, multiplicator := range input_clean {
+			multiplicand *= multiplicator
+		}
+		result = multiplicand
 	}
-	var multiplicand float32 = 1.0
-	for _, multiplicator := range input_clean {
-		multiplicand *= multiplicator
-	}
-	return multiplicand
+
+	return result
 }
 
 type Node struct {
