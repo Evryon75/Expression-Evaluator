@@ -11,26 +11,35 @@ import pretty_print "github.com/k0kubun/pp" // pretty print libs my beloved :)
 const EOF string = "X"
 
 func main() {
-	var input_raw string
-	fmt.Scan(&input_raw)
-	input_raw = EOF + input_raw
-	pretty_print.Println(eval(lex(input_raw)))
+	println("Input your mathematical expression, input 'q' to quit")
+	for true {
+		var input_raw string
+		fmt.Scan(&input_raw)
+		if input_raw == "q" {
+			break
+		} else if strings.ContainsAny(input_raw, "(") || strings.ContainsAny(input_raw, ")") {
+			fmt.Println("Grouping evaluation such as '(x+y)*z' is not implemented yet")
+		} else {
+			pretty_print.Println(eval(lex(EOF + input_raw)))
+		}
+	}
 }
 
 func lex(input string) *Node {
 	operator, index := find_operator(input)
-	if index != -1 {
+	if index > -1 {
 		return &Node{
 			Value: operator,
 			Left:  &Node{Value: input[index+1:]},
 			Right: lex(input[:index]),
 		}
 	} else {
-		return &Node{Value: strconv.FormatFloat(float64(eval_md(input)), 'f', -1, 64)}
+		return &Node{Value: strconv.FormatFloat(eval_md(input), 'f', -1, 64)}
 	}
 }
 
 func find_operator(input string) (operator string, index int) {
+	// reverse for loop because we want to assemble the tree from right to left, otherwise it would have the opposite order
 	for i := len(input) - 1; i >= 0; i-- {
 		if string(input[i]) == "+" || string(input[i]) == "-" || string(input[i]) == EOF {
 			return string(input[i]), i
@@ -55,22 +64,24 @@ func eval(tree *Node) float64 {
 			result = eval(tree.Right) - eval(tree.Left)
 		}
 	default:
-		result = eval_md(strings.Replace(tree.Left.Value, EOF, "", 1))
+		if tree.Value == EOF {
+			result = eval_md(strings.Replace(tree.Left.Value, EOF, "", 1))
+		} else {
+			result = eval_md(strings.Replace(tree.Value, EOF, "", 1))
+		}
 	}
 	return result
 }
+
 func eval_md(input string) float64 {
 	input_clean := []float64{}
 	input_split := strings.Split(input, "*")
 	for _, piece_m := range input_split {
-		first := false
-		for _, piece_d := range strings.Split(piece_m, "/") {
-			if !first {
-				temp, _ := strconv.Atoi(piece_d)
+		for i, piece_d := range strings.Split(piece_m, "/") {
+			temp, _ := strconv.ParseFloat(piece_d, 64)
+			if i == 0 {
 				input_clean = append(input_clean, float64(temp))
-				first = true
 			} else {
-				temp, _ := strconv.Atoi(piece_d)
 				input_clean = append(input_clean, 1/float64(temp))
 			}
 		}
